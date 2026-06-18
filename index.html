@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Happy & Bear Jastip</title>
+<title>Jastipku</title>
 <link rel="manifest" href="data:application/json,{}">
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
@@ -33,11 +33,19 @@
   .badge.dp { background: #FAEEDA; color: #412402; }
   .badge.unpaid { background: #FCEBEB; color: #501313; }
   .loading { text-align: center; padding: 2rem; color: #888780; }
+  .welcome-screen { max-width: 360px; margin: 3rem auto; text-align: center; }
+  .welcome-screen .logo { width: 64px; height: 64px; border-radius: 50%; background: #D85A30; margin: 0 auto 1.25rem; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 28px; }
+  .welcome-screen h1 { font-size: 24px; margin: 0 0 8px; }
+  .welcome-screen p.sub { color: #888780; font-size: 14px; margin: 0 0 2rem; }
+  .welcome-actions { display: flex; flex-direction: column; gap: 10px; }
   .login-screen { max-width: 320px; margin: 3rem auto; text-align: center; }
   .login-screen .logo { width: 56px; height: 56px; border-radius: 50%; background: #D85A30; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 24px; }
   .full-width { width: 100%; }
   .error-text { color: #A32D2D; font-size: 13px; margin-top: 8px; }
   .flash { background: #EAF3DE; color: #173404; padding: 8px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 1rem; }
+  .calc-result-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; }
+  .calc-result-row.total { font-weight: 600; border-top: 1px solid #d3d1c7; margin-top: 6px; padding-top: 10px; }
+  .field-label { font-size: 13px; color: #888780; margin: 0 0 4px; }
 </style>
 </head>
 <body>
@@ -56,14 +64,29 @@ const BUSINESS = {
   holder: 'Happy & Bear Books Ltd'
 };
 
+const RATES_TO_GBP = { GBP: 1, IDR: 0.000041, USD: 0.79, MYR: 0.17, SGD: 0.58, AUD: 0.51 };
+const SYM = { GBP: '£', IDR: 'Rp', USD: '$', MYR: 'RM', SGD: 'S$', AUD: 'A$' };
+
+function fx(amountGBP, cur) { return amountGBP / RATES_TO_GBP[cur]; }
+function fmtCur(n, cur) {
+  const v = Math.round(n * 100) / 100;
+  return SYM[cur] + v.toLocaleString(undefined, { minimumFractionDigits: cur === 'IDR' ? 0 : 2, maximumFractionDigits: cur === 'IDR' ? 0 : 2 });
+}
+
+// Read query string once at load — supports ?view=customer to share a direct link
+const urlParams = new URLSearchParams(window.location.search);
+
 const state = {
-  view: 'owner',
+  view: urlParams.get('view') === 'customer' ? 'customer' : 'welcome',
   ownerTab: 'customers',
   custStep: 'login',
   custCode: '',
+  custCalcType: 'regular',
+  calcCurrency: 'GBP',
   customers: [],
   loading: true,
-  error: null
+  error: null,
+  ordersDebug: null
 };
 
 async function apiGet(action, params = {}) {
@@ -89,6 +112,11 @@ function waLink(text, phone) {
   return `https://wa.me/${clean}?text=${encodeURIComponent(text)}`;
 }
 
+function getShareLink() {
+  const base = window.location.origin + window.location.pathname;
+  return `${base}?view=customer`;
+}
+
 async function loadCustomers() {
   state.loading = true;
   render();
@@ -103,11 +131,19 @@ function render() {
   const app = document.getElementById('app');
   app.innerHTML = '';
 
+  if (state.view === 'welcome') {
+    renderWelcome(app);
+    return;
+  }
+
   const header = document.createElement('div');
   header.className = 'header';
   header.innerHTML = `
     <h1>${BUSINESS.name}</h1>
-    <button class="secondary" id="viewSwitch">${state.view === 'owner' ? 'Switch to customer view' : 'Switch to owner view'}</button>
+    <div style="display:flex; gap:8px;">
+      ${state.view === 'owner' ? `<button class="secondary" id="shareBtn">Copy customer link</button>` : ''}
+      <button class="secondary" id="viewSwitch">${state.view === 'owner' ? 'Switch to customer view' : 'Back to owner view'}</button>
+    </div>
   `;
   app.appendChild(header);
 
@@ -124,11 +160,37 @@ function render() {
   if (state.view === 'owner') renderOwner(app);
   else renderCustomer(app);
 
+  const shareBtn = document.getElementById('shareBtn');
+  if (shareBtn) {
+    shareBtn.onclick = () => {
+      navigator.clipboard.writeText(getShareLink()).then(() => {
+        shareBtn.textContent = 'Link copied!';
+        setTimeout(() => { shareBtn.textContent = 'Copy customer link'; }, 1800);
+      });
+    };
+  }
+
   document.getElementById('viewSwitch').onclick = () => {
     state.view = state.view === 'owner' ? 'customer' : 'owner';
     state.custStep = 'login';
     render();
   };
+}
+
+function renderWelcome(app) {
+  app.innerHTML = `
+    <div class="welcome-screen">
+      <div class="logo">🐻</div>
+      <h1>Welcome to Jastipku</h1>
+      <p class="sub">Manage your jastip orders, or check on yours.</p>
+      <div class="welcome-actions">
+        <button class="full-width" id="ownerLoginBtn">Log in as business owner</button>
+        <button class="full-width secondary" id="customerLoginBtn">I'm a customer — check my order</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('ownerLoginBtn').onclick = () => { state.view = 'owner'; render(); };
+  document.getElementById('customerLoginBtn').onclick = () => { state.view = 'customer'; state.custStep = 'login'; render(); };
 }
 
 function renderOwner(app) {
@@ -197,11 +259,23 @@ function renderOwnerCustomers(body) {
 
 async function renderOwnerOrders(body) {
   body.innerHTML = `<div class="loading">Loading orders...</div>`;
-  const all = await apiGet('getAllOrders');
-  if (all.error) { body.innerHTML = `<div class="card">Error: ${all.error}</div>`; return; }
+  let all;
+  try {
+    all = await apiGet('getAllOrders');
+  } catch (err) {
+    body.innerHTML = `<div class="card" style="color:#A32D2D;">Request failed: ${err.message}</div>`;
+    return;
+  }
+  if (all && all.error) {
+    body.innerHTML = `<div class="card" style="color:#A32D2D;">Backend error: ${all.error}</div>`;
+    return;
+  }
+  if (!Array.isArray(all) || all.length === 0) {
+    body.innerHTML = `<div class="card">No order data returned. This usually means the Orders sheet name or column headers don't match what the script expects — check the Apps Script logs (View &gt; Executions) for details.</div>`;
+    return;
+  }
 
-  body.innerHTML = `<div class="card">
-    ${all.flatMap(({customer, orders}) => orders.map(o => `
+  const rows = all.flatMap(({customer, orders}) => (orders || []).map(o => `
       <div class="row" style="align-items:flex-start;">
         <div>
           <strong>${customer.name}</strong> <span style="color:#888780;">· ${customer.code}</span><br>
@@ -212,8 +286,14 @@ async function renderOwnerOrders(body) {
           <span class="badge ${o.paymentStatus.toLowerCase()}">${o.paymentStatus}</span>
         </div>
       </div>
-    `)).join('')}
-  </div>`;
+  `));
+
+  if (rows.length === 0) {
+    body.innerHTML = `<div class="card">Customers loaded, but no order rows matched any customer code. Check that the Customer Code column in ORDER LIST matches CUST DATA exactly (no extra spaces).</div>`;
+    return;
+  }
+
+  body.innerHTML = `<div class="card">${rows.join('')}</div>`;
 }
 
 async function renderOwnerInvoice(body) {
@@ -231,6 +311,10 @@ async function renderOwnerInvoice(body) {
     const cust = state.customers.find(c => c.code === code);
     const orders = await apiGet('getOrdersForCustomer', { code });
     const preview = document.getElementById('invPreview');
+    if (orders.error || !Array.isArray(orders)) {
+      preview.innerHTML = `<div class="card" style="color:#A32D2D;">Error loading orders: ${orders.error || 'unexpected response'}</div>`;
+      return;
+    }
     const totalBalance = orders.reduce((s,o) => s + o.balanceDue, 0);
 
     preview.innerHTML = `
@@ -252,10 +336,12 @@ async function renderOwnerInvoice(body) {
       <div style="display:flex; gap:8px; flex-wrap:wrap;">
         <button id="pdfBtn">Download PDF</button>
         <button class="whatsapp" id="waBtn">Send via WhatsApp</button>
+        ${orders.length > 0 ? `
         <select id="periodSel" style="flex:1;">
           ${orders.map(o => `<option value="${o.poPeriod}">${o.poPeriod} — mark as paid</option>`).join('')}
         </select>
         <button class="secondary" id="markPaidBtn">Mark period paid</button>
+        ` : ''}
       </div>
     `;
 
@@ -266,12 +352,15 @@ async function renderOwnerInvoice(body) {
       txt += `\n*Balance due: ${fmtRp(totalBalance)}*\n\nBank: ${BUSINESS.bank}\nAccount: ${BUSINESS.account}\nName: ${BUSINESS.holder}`;
       window.open(waLink(txt, cust.phone), '_blank');
     };
-    document.getElementById('markPaidBtn').onclick = async () => {
-      const period = document.getElementById('periodSel').value;
-      document.getElementById('markPaidBtn').textContent = 'Saving...';
-      await apiPost('markPeriodPaid', { code, poPeriod: period });
-      await renderPreview();
-    };
+    const markPaidBtn = document.getElementById('markPaidBtn');
+    if (markPaidBtn) {
+      markPaidBtn.onclick = async () => {
+        const period = document.getElementById('periodSel').value;
+        markPaidBtn.textContent = 'Saving...';
+        await apiPost('markPeriodPaid', { code, poPeriod: period });
+        await renderPreview();
+      };
+    }
   }
   document.getElementById('invCustSel').onchange = renderPreview;
   renderPreview();
@@ -305,10 +394,13 @@ function generatePDF(cust, orders, totalBalance) {
 async function renderOwnerProfit(body) {
   body.innerHTML = `<div class="loading">Loading...</div>`;
   const all = await apiGet('getAllOrders');
-  if (all.error) { body.innerHTML = `<div class="card">Error: ${all.error}</div>`; return; }
+  if (all.error || !Array.isArray(all)) {
+    body.innerHTML = `<div class="card" style="color:#A32D2D;">Error: ${all.error || 'unexpected response'}</div>`;
+    return;
+  }
 
   let totalRevenue = 0, totalOrders = 0;
-  all.forEach(({orders}) => orders.forEach(o => { totalRevenue += o.total; totalOrders += 1; }));
+  all.forEach(({orders}) => (orders || []).forEach(o => { totalRevenue += o.total; totalOrders += 1; }));
 
   body.innerHTML = `
     <div class="metrics-grid">
@@ -343,16 +435,29 @@ function renderCustomer(app) {
   const cust = state.customers.find(c => c.code === state.custCode);
   const nav = document.createElement('div');
   nav.className = 'tabs';
-  nav.innerHTML = `<div class="tab active">My order</div><div class="tab" id="backBtn" style="margin-left:auto;">Back</div>`;
+  nav.innerHTML = `
+    <div class="tab ${state.custStep==='order'?'active':''}" data-step="order">My order</div>
+    <div class="tab ${state.custStep==='calc'?'active':''}" data-step="calc">Calculator</div>
+    <div class="tab" id="backBtn" style="margin-left:auto;">Back</div>
+  `;
   app.appendChild(nav);
+  nav.querySelectorAll('[data-step]').forEach(el => el.onclick = () => { state.custStep = el.dataset.step; render(); });
   document.getElementById('backBtn').onclick = () => { state.custStep = 'login'; render(); };
 
   const body = document.createElement('div');
-  body.innerHTML = `<div class="loading">Loading...</div>`;
   app.appendChild(body);
 
+  if (state.custStep === 'order') renderMyOrder(body, cust);
+  if (state.custStep === 'calc') renderCalculator(body);
+}
+
+function renderMyOrder(body, cust) {
+  body.innerHTML = `<div class="loading">Loading...</div>`;
   apiGet('getOrdersForCustomer', { code: cust.code }).then(orders => {
-    if (orders.error) { body.innerHTML = `<div class="card">Error: ${orders.error}</div>`; return; }
+    if (orders.error || !Array.isArray(orders)) {
+      body.innerHTML = `<div class="card" style="color:#A32D2D;">Error: ${orders.error || 'unexpected response'}</div>`;
+      return;
+    }
     const totalOrder = orders.reduce((s,o)=>s+o.total,0);
     const totalPaid = orders.reduce((s,o)=>s+o.downpayment,0);
     const totalBalance = orders.reduce((s,o)=>s+o.balanceDue,0);
@@ -364,7 +469,7 @@ function renderCustomer(app) {
         <div class="metric"><p class="label">Balance</p><p class="value">${fmtRp(totalBalance)}</p></div>
       </div>
       <div class="card">
-        ${orders.map(o => `
+        ${orders.length === 0 ? '<p style="color:#888780;">No orders found for this code yet.</p>' : orders.map(o => `
           <div class="row" style="align-items:flex-start;">
             <div><strong>${o.poPeriod}</strong><br><span style="font-size:13px; color:#888780;">${o.itemCount} items</span></div>
             <div style="text-align:right;">
@@ -378,7 +483,100 @@ function renderCustomer(app) {
   });
 }
 
-loadCustomers();
+function renderCalculator(body) {
+  body.innerHTML = `
+    <div class="card">
+      <div style="display:flex; gap:8px; margin-bottom:1rem; flex-wrap:wrap;">
+        <select id="calcCur">
+          ${Object.keys(RATES_TO_GBP).map(c => `<option value="${c}" ${state.calcCurrency===c?'selected':''}>${c}</option>`).join('')}
+        </select>
+        <div style="display:flex; gap:4px;">
+          <div class="tab ${state.custCalcType==='regular'?'active':''}" data-ctype="regular">Regular item</div>
+          <div class="tab ${state.custCalcType==='books'?'active':''}" data-ctype="books">Books</div>
+        </div>
+      </div>
+      <div id="calcBody"></div>
+    </div>
+  `;
+  document.getElementById('calcCur').onchange = e => { state.calcCurrency = e.target.value; renderCalculator(body); };
+  body.querySelectorAll('[data-ctype]').forEach(el => el.onclick = () => { state.custCalcType = el.dataset.ctype; renderCalculator(body); });
+
+  const calcBody = document.getElementById('calcBody');
+  const cur = state.calcCurrency;
+
+  if (state.custCalcType === 'regular') {
+    calcBody.innerHTML = `
+      <p class="field-label">Item price (${cur})</p>
+      <input type="number" id="regPrice" value="20" min="0" step="0.01" class="full-width" style="margin-bottom:10px;" />
+      <p class="field-label">Weight (g)</p>
+      <input type="number" id="regWeight" value="500" min="0" step="10" class="full-width" style="margin-bottom:10px;" />
+      <p class="field-label">Shipping rate / kg (${cur})</p>
+      <input type="number" id="regShipRate" value="${fx(14, cur).toFixed(2)}" min="0" step="0.01" class="full-width" style="margin-bottom:10px;" />
+      <div style="background:#f1efe8; border-radius:8px; padding:0.75rem 1rem; margin-top:10px;">
+        <div class="calc-result-row"><span>Jastip fee (10%)</span><span id="regFeeOut">—</span></div>
+        <div class="calc-result-row"><span>Shipping</span><span id="regShipOut">—</span></div>
+        <div class="calc-result-row total"><span>Total</span><span id="regTotalOut">—</span></div>
+      </div>
+    `;
+    const recalc = () => {
+      const price = parseFloat(document.getElementById('regPrice').value) || 0;
+      const weight = parseFloat(document.getElementById('regWeight').value) || 0;
+      const shipRate = parseFloat(document.getElementById('regShipRate').value) || 0;
+      const fee = price * 0.10;
+      const shipping = (weight / 1000) * shipRate;
+      document.getElementById('regFeeOut').textContent = fmtCur(fee, cur);
+      document.getElementById('regShipOut').textContent = fmtCur(shipping, cur);
+      document.getElementById('regTotalOut').textContent = fmtCur(price + fee + shipping, cur);
+    };
+    ['regPrice','regWeight','regShipRate'].forEach(id => document.getElementById(id).oninput = recalc);
+    recalc();
+  } else {
+    calcBody.innerHTML = `
+      <p class="field-label">Book price, CIF (${cur})</p>
+      <input type="number" id="bkPrice" value="10" min="0" step="0.01" class="full-width" style="margin-bottom:10px;" />
+      <p class="field-label">Weight (g)</p>
+      <input type="number" id="bkWeight" value="400" min="0" step="10" class="full-width" style="margin-bottom:10px;" />
+      <p class="field-label">Shipping rate / kg (${cur})</p>
+      <input type="number" id="bkShipRate" value="${fx(5, cur).toFixed(2)}" min="0" step="0.01" class="full-width" style="margin-bottom:10px;" />
+      <p class="field-label">Format</p>
+      <select id="bkFormat" class="full-width" style="margin-bottom:10px;">
+        <option value="1">Paperback / Softcover (+£1)</option>
+        <option value="2">Hardback / Hardcover / Boardbook (+£2)</option>
+        <option value="3">Box set / Bundling (+£3)</option>
+      </select>
+      <div style="background:#f1efe8; border-radius:8px; padding:0.75rem 1rem; margin-top:10px;">
+        <div class="calc-result-row"><span>Jastip fee</span><span id="bkFeeOut">—</span></div>
+        <div class="calc-result-row"><span>Shipping</span><span id="bkShipOut">—</span></div>
+        <div class="calc-result-row"><span>Est. import tax (PPN + PPh)</span><span id="bkTaxOut">—</span></div>
+        <div class="calc-result-row total"><span>Total</span><span id="bkTotalOut">—</span></div>
+      </div>
+      <p style="font-size:12px; color:#888780; margin-top:8px;">Estimate only — PPN 11% + PPh 2.5% of CIF. Final tax determined at customs.</p>
+    `;
+    const recalc = () => {
+      const price = parseFloat(document.getElementById('bkPrice').value) || 0;
+      const weight = parseFloat(document.getElementById('bkWeight').value) || 0;
+      const shipRate = parseFloat(document.getElementById('bkShipRate').value) || 0;
+      const formatFeeGBP = parseFloat(document.getElementById('bkFormat').value) || 0;
+      const formatFee = fx(formatFeeGBP, cur);
+      const shipping = (weight / 1000) * shipRate;
+      const cifGBP = price * RATES_TO_GBP[cur];
+      const taxGBP = cifGBP * 0.11 + cifGBP * 0.025;
+      const tax = fx(taxGBP, cur);
+      document.getElementById('bkFeeOut').textContent = fmtCur(formatFee, cur);
+      document.getElementById('bkShipOut').textContent = fmtCur(shipping, cur);
+      document.getElementById('bkTaxOut').textContent = fmtCur(tax, cur);
+      document.getElementById('bkTotalOut').textContent = fmtCur(price + formatFee + shipping + tax, cur);
+    };
+    ['bkPrice','bkWeight','bkShipRate','bkFormat'].forEach(id => document.getElementById(id).addEventListener('input', recalc));
+    recalc();
+  }
+}
+
+if (state.view === 'welcome') {
+  render();
+} else {
+  loadCustomers();
+}
 </script>
 </body>
 </html>

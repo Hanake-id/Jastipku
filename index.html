@@ -3,41 +3,46 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Jastipku</title>
+<title>Happy & Bear Books</title>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <style>
   * { box-sizing: border-box; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; background: #f7f5f0; color: #2c2c2a; }
-  .app { max-width: 480px; margin: 0 auto; padding: 1rem; min-height: 100vh; }
-  .header { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 1.5rem 0 1.25rem; }
-  .header .logo { width: 40px; height: 40px; border-radius: 50%; background: #D85A30; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 18px; }
-  .header h1 { font-size: 18px; font-weight: 600; margin: 0; }
-  select, input, textarea, button { font-family: inherit; font-size: 14px; padding: 8px 10px; border-radius: 8px; border: 1px solid #d3d1c7; }
-  button { background: #2c2c2a; color: #fff; border: none; cursor: pointer; }
-  button:hover { opacity: 0.85; }
-  button.secondary { background: #fff; color: #2c2c2a; border: 1px solid #d3d1c7; }
-  .tabs { display: flex; gap: 4px; margin-bottom: 1.25rem; }
-  .tab { flex: 1; text-align: center; padding: 10px 14px; border-radius: 8px; font-size: 14px; cursor: pointer; }
-  .tab.active { background: #fff; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
-  .card { background: #fff; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1rem; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
-  .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 0; border-bottom: 1px solid #eee; font-size: 14px; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; background: #e8dcc8; color: #3c2a1e; }
+  .app { max-width: 480px; margin: 0 auto; padding: 0 0 2rem; min-height: 100vh; }
+  .header { background: #3c2a1e; color: #f3e9d8; padding: 1.5rem 1.25rem; text-align: left; }
+  .header h1 { font-size: 22px; font-weight: 700; margin: 0; }
+  .header p { font-size: 12px; letter-spacing: 1px; margin: 4px 0 0; color: #c9a875; text-transform: uppercase; }
+  .content { padding: 1.25rem; }
+  select, input, textarea, button { font-family: inherit; font-size: 14px; padding: 10px 12px; border-radius: 10px; border: 1px solid #d8c4a0; background: #fff; }
+  button { background: #3c2a1e; color: #f3e9d8; border: none; cursor: pointer; font-weight: 600; }
+  button:hover { opacity: 0.88; }
+  button.secondary { background: #fff; color: #3c2a1e; border: 1px solid #d8c4a0; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 1.25rem; }
+  .tab { flex: 1; text-align: center; padding: 12px 14px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; background: #fff; border: 1px solid #d8c4a0; color: #3c2a1e; }
+  .tab.active { background: #3c2a1e; color: #f3e9d8; border-color: #3c2a1e; }
+  .card { background: #faf4e8; border: 1px solid #d8c4a0; border-radius: 14px; padding: 1.1rem 1.25rem; margin-bottom: 1rem; }
+  .card-title { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: #6b4e2e; margin: 0 0 1rem; }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 9px 0; border-bottom: 1px solid #ecdfc4; font-size: 14px; }
   .row:last-child { border-bottom: none; }
-  .metric { background: #f1efe8; border-radius: 8px; padding: 1rem; }
-  .metric p.label { font-size: 13px; color: #888780; margin: 0 0 4px; }
-  .metric p.value { font-size: 20px; font-weight: 600; margin: 0; }
+  .row.bold { font-weight: 700; }
+  .metric { background: #faf4e8; border: 1px solid #d8c4a0; border-radius: 10px; padding: 1rem; }
+  .metric p.label { font-size: 12px; color: #8a6d47; margin: 0 0 4px; }
+  .metric p.value { font-size: 18px; font-weight: 700; margin: 0; }
   .metrics-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 1.25rem; }
-  .badge { font-size: 12px; padding: 3px 10px; border-radius: 8px; font-weight: 600; }
-  .badge.paid { background: #EAF3DE; color: #173404; }
-  .badge.dp { background: #FAEEDA; color: #412402; }
-  .badge.unpaid { background: #FCEBEB; color: #501313; }
-  .loading { text-align: center; padding: 2rem; color: #888780; }
-  .login-screen { max-width: 320px; margin: 3rem auto; text-align: center; }
-  .login-screen .logo { width: 56px; height: 56px; border-radius: 50%; background: #D85A30; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 24px; }
+  .badge { font-size: 11px; padding: 4px 10px; border-radius: 8px; font-weight: 700; }
+  .badge.paid { background: #d9e8c4; color: #2f4716; }
+  .badge.dp { background: #f3ddb0; color: #5c3f0a; }
+  .badge.unpaid { background: #f0d2cf; color: #6b1f17; }
+  .loading { text-align: center; padding: 2rem; color: #8a6d47; }
+  .login-card { background: #faf4e8; border: 1px solid #d8c4a0; border-radius: 14px; padding: 1.5rem; margin-bottom: 1rem; }
   .full-width { width: 100%; }
-  .error-text { color: #A32D2D; font-size: 13px; margin-top: 8px; }
-  .calc-result-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; }
-  .calc-result-row.total { font-weight: 600; border-top: 1px solid #d3d1c7; margin-top: 6px; padding-top: 10px; }
-  .field-label { font-size: 13px; color: #888780; margin: 0 0 4px; }
+  .error-text { background: #f5e3e1; color: #6b1f17; padding: 10px 12px; border-radius: 8px; font-size: 13px; margin-top: 10px; }
+  .total-banner { background: #3c2a1e; color: #f3e9d8; border-radius: 12px; padding: 1rem 1.25rem; display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem; }
+  .total-banner .label { font-size: 12px; color: #c9a875; text-transform: uppercase; letter-spacing: 0.5px; }
+  .total-banner .sub { font-size: 11px; color: #b89a6e; margin-top: 2px; }
+  .total-banner .value { font-size: 24px; font-weight: 700; }
+  .field-label { font-size: 13px; color: #8a6d47; margin: 0 0 4px; font-weight: 600; }
+  .footer-note { text-align: center; font-size: 12px; color: #8a6d47; margin-top: 1.5rem; }
 </style>
 </head>
 <body>
@@ -67,6 +72,14 @@ function fmtRp(n) {
   return 'Rp' + Math.round(n).toLocaleString('id-ID');
 }
 
+// Round UP to the nearest 1000 units of the currency's smallest meaningful step.
+// IDR steps by 1000; smaller-denomination currencies (GBP, USD etc.) step by 1 unit's worth
+// scaled the same proportional way, so the "final price" always lands on a clean round number.
+function roundUpFinal(n, cur) {
+  const step = cur === 'IDR' ? 1000 : (cur === 'MYR' || cur === 'SGD' || cur === 'AUD' ? 1 : 1);
+  return Math.ceil(n / step) * step;
+}
+
 const state = {
   step: 'login',
   tab: 'order',
@@ -90,25 +103,29 @@ function render() {
 
   const header = document.createElement('div');
   header.className = 'header';
-  header.innerHTML = `<div class="logo">🐻</div><h1>Jastipku</h1>`;
+  header.innerHTML = `<h1>📖 ${BUSINESS.name}</h1><p>Order Invoice</p>`;
   app.appendChild(header);
 
+  const content = document.createElement('div');
+  content.className = 'content';
+  app.appendChild(content);
+
   if (state.step === 'login') {
-    renderLogin(app);
+    renderLogin(content);
     return;
   }
 
   const nav = document.createElement('div');
   nav.className = 'tabs';
   nav.innerHTML = `
-    <div class="tab ${state.tab==='order'?'active':''}" data-tab="order">My order</div>
-    <div class="tab ${state.tab==='calc'?'active':''}" data-tab="calc">Calculator</div>
+    <div class="tab ${state.tab==='order'?'active':''}" data-tab="order">📦 My Orders</div>
+    <div class="tab ${state.tab==='calc'?'active':''}" data-tab="calc">🧮 Calculator</div>
   `;
-  app.appendChild(nav);
+  content.appendChild(nav);
   nav.querySelectorAll('[data-tab]').forEach(el => el.onclick = () => { state.tab = el.dataset.tab; render(); });
 
   const body = document.createElement('div');
-  app.appendChild(body);
+  content.appendChild(body);
 
   if (state.tab === 'order') renderMyOrder(body);
   if (state.tab === 'calc') renderCalculator(body);
@@ -117,7 +134,7 @@ function render() {
   backWrap.style.textAlign = 'center';
   backWrap.style.marginTop = '1rem';
   backWrap.innerHTML = `<button class="secondary" id="backBtn">Use a different code</button>`;
-  app.appendChild(backWrap);
+  content.appendChild(backWrap);
   document.getElementById('backBtn').onclick = () => {
     state.step = 'login';
     state.custCode = '';
@@ -125,27 +142,41 @@ function render() {
     state.orders = [];
     render();
   };
+
+  const footer = document.createElement('p');
+  footer.className = 'footer-note';
+  footer.textContent = `© ${BUSINESS.name} — happy reading! 📚`;
+  content.appendChild(footer);
 }
 
-function renderLogin(app) {
-  app.innerHTML += `
-    <div class="login-screen">
-      <p style="color:#888780; font-size:14px;">Enter your customer code to view your order</p>
-      <input id="codeInput" class="full-width" placeholder="e.g. SS6274" style="margin: 12px 0;" />
-      <button class="full-width" id="loginBtn">Continue</button>
-      <p id="loginErr" class="error-text"></p>
+function renderLogin(content) {
+  content.innerHTML += `
+    <div class="login-card">
+      <p style="font-weight:700; font-size:16px; margin:0 0 4px;">Enter Your Customer Code</p>
+      <p style="color:#8a6d47; font-size:13px; margin:0 0 12px;">Example: AB1234, SS6274, etc.</p>
+      <input id="codeInput" class="full-width" placeholder="e.g. SS6274" style="margin-bottom:10px;" />
+      <button class="full-width" id="loginBtn">🔍 Search</button>
+      <div id="loginErrWrap"></div>
     </div>
   `;
   document.getElementById('codeInput').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('loginBtn').click(); });
   document.getElementById('loginBtn').onclick = async () => {
     const code = document.getElementById('codeInput').value.trim().toUpperCase();
-    const errEl = document.getElementById('loginErr');
-    if (!code) { errEl.textContent = 'Please enter a code'; return; }
+    const errWrap = document.getElementById('loginErrWrap');
+    errWrap.innerHTML = '';
+    if (!code) { errWrap.innerHTML = `<div class="error-text">Please enter a code</div>`; return; }
     document.getElementById('loginBtn').textContent = 'Checking...';
-    const cust = await apiGet('getCustomerByCode', { code });
+    let cust;
+    try {
+      cust = await apiGet('getCustomerByCode', { code });
+    } catch (err) {
+      errWrap.innerHTML = `<div class="error-text">Something went wrong. Please try again.</div>`;
+      document.getElementById('loginBtn').textContent = '🔍 Search';
+      return;
+    }
     if (cust.error || !cust.code) {
-      errEl.textContent = 'Code not found — check and try again';
-      document.getElementById('loginBtn').textContent = 'Continue';
+      errWrap.innerHTML = `<div class="error-text">Code not found — check and try again.</div>`;
+      document.getElementById('loginBtn').textContent = '🔍 Search';
       return;
     }
     state.customer = cust;
@@ -166,24 +197,23 @@ function renderMyOrder(body) {
   const totalBalance = orders.reduce((s,o)=>s+o.balanceDue,0);
 
   body.innerHTML = `
-    <p style="text-align:center;"><strong>${cust.name}</strong> <span style="color:#888780;">· ${cust.code}</span></p>
+    <p style="text-align:center; font-weight:700; font-size:16px;">${cust.name} <span style="color:#8a6d47; font-weight:400;">· ${cust.code}</span></p>
     <div class="metrics-grid">
       <div class="metric"><p class="label">Total</p><p class="value">${fmtRp(totalOrder)}</p></div>
       <div class="metric"><p class="label">Paid</p><p class="value">${fmtRp(totalPaid)}</p></div>
       <div class="metric"><p class="label">Balance</p><p class="value">${fmtRp(totalBalance)}</p></div>
     </div>
-    <div class="card">
-      ${orders.length === 0 ? '<p style="color:#888780;">No orders found for this code yet.</p>' : orders.map(o => `
-        <div class="row" style="align-items:flex-start;">
-          <div><strong>${o.poPeriod}</strong><br><span style="font-size:13px; color:#888780;">${o.itemCount} items</span></div>
-          <div style="text-align:right;">
-            <div>${fmtRp(o.total)}</div>
-            <span class="badge ${o.paymentStatus.toLowerCase()}">${o.paymentStatus}</span>
-          </div>
-        </div>
-      `).join('')}
-    </div>
-    ${orders.length > 0 ? `<button class="full-width" id="pdfBtn">Download invoice (PDF)</button>` : ''}
+    ${orders.length === 0 ? `<div class="card"><p style="color:#8a6d47; margin:0;">No orders found for this code yet.</p></div>` : orders.map(o => `
+      <div class="card">
+        <div class="card-title"><span>📦</span><span>${o.poPeriod}</span></div>
+        <div class="row"><span>Items in this order</span><span>${o.itemCount}</span></div>
+        <div class="row"><span>Total price</span><span>${fmtRp(o.total)}</span></div>
+        <div class="row"><span>Downpayment paid</span><span>${fmtRp(o.downpayment)}</span></div>
+        <div class="row bold"><span>Balance due</span><span>${fmtRp(o.balanceDue)}</span></div>
+        <div class="row"><span>Payment status</span><span class="badge ${o.paymentStatus.toLowerCase()}">${o.paymentStatus}</span></div>
+      </div>
+    `).join('')}
+    ${orders.length > 0 ? `<button class="full-width" id="pdfBtn">⬇ Download invoice (PDF)</button>` : ''}
   `;
 
   const pdfBtn = document.getElementById('pdfBtn');
@@ -218,17 +248,16 @@ function generatePDF(cust, orders, totalBalance) {
 function renderCalculator(body) {
   body.innerHTML = `
     <div class="card">
-      <div style="display:flex; gap:8px; margin-bottom:1rem; flex-wrap:wrap;">
-        <select id="calcCur">
-          ${Object.keys(RATES_TO_GBP).map(c => `<option value="${c}" ${state.calcCurrency===c?'selected':''}>${c}</option>`).join('')}
-        </select>
-        <div style="display:flex; gap:4px; flex:1;">
-          <div class="tab ${state.custCalcType==='regular'?'active':''}" data-ctype="regular">Regular item</div>
-          <div class="tab ${state.custCalcType==='books'?'active':''}" data-ctype="books">Books</div>
-        </div>
-      </div>
-      <div id="calcBody"></div>
+      <div class="card-title"><span>💱</span><span>Currency</span></div>
+      <select id="calcCur" class="full-width">
+        ${Object.keys(RATES_TO_GBP).map(c => `<option value="${c}" ${state.calcCurrency===c?'selected':''}>${c}</option>`).join('')}
+      </select>
     </div>
+    <div class="tabs">
+      <div class="tab ${state.custCalcType==='regular'?'active':''}" data-ctype="regular">Regular item</div>
+      <div class="tab ${state.custCalcType==='books'?'active':''}" data-ctype="books">📕 Books</div>
+    </div>
+    <div id="calcBody"></div>
   `;
   document.getElementById('calcCur').onchange = e => { state.calcCurrency = e.target.value; renderCalculator(body); };
   body.querySelectorAll('[data-ctype]').forEach(el => el.onclick = () => { state.custCalcType = el.dataset.ctype; renderCalculator(body); });
@@ -238,16 +267,24 @@ function renderCalculator(body) {
 
   if (state.custCalcType === 'regular') {
     calcBody.innerHTML = `
-      <p class="field-label">Item price (${cur})</p>
-      <input type="number" id="regPrice" value="20" min="0" step="0.01" class="full-width" style="margin-bottom:10px;" />
-      <p class="field-label">Weight (g)</p>
-      <input type="number" id="regWeight" value="500" min="0" step="10" class="full-width" style="margin-bottom:10px;" />
-      <p class="field-label">Shipping rate / kg (${cur})</p>
-      <input type="number" id="regShipRate" value="${fx(14, cur).toFixed(2)}" min="0" step="0.01" class="full-width" style="margin-bottom:10px;" />
-      <div style="background:#f1efe8; border-radius:8px; padding:0.75rem 1rem; margin-top:10px;">
-        <div class="calc-result-row"><span>Jastip fee (10%)</span><span id="regFeeOut">—</span></div>
-        <div class="calc-result-row"><span>Shipping</span><span id="regShipOut">—</span></div>
-        <div class="calc-result-row total"><span>Total</span><span id="regTotalOut">—</span></div>
+      <div class="card">
+        <div class="card-title"><span>🏷️</span><span>Item details</span></div>
+        <p class="field-label">Item price (${cur})</p>
+        <input type="number" id="regPrice" value="20" min="0" step="0.01" class="full-width" style="margin-bottom:10px;" />
+        <p class="field-label">Weight (g)</p>
+        <input type="number" id="regWeight" value="500" min="0" step="10" class="full-width" style="margin-bottom:10px;" />
+        <p class="field-label">Shipping rate / kg (${cur})</p>
+        <input type="number" id="regShipRate" value="${fx(14, cur).toFixed(2)}" min="0" step="0.01" class="full-width" />
+      </div>
+      <div class="card">
+        <div class="card-title"><span>📊</span><span>Price breakdown</span></div>
+        <div class="row"><span>Item price</span><span id="regPriceOut">—</span></div>
+        <div class="row"><span>Shipping</span><span id="regShipOut">—</span></div>
+        <div class="row bold"><span>Jastip fee (10%)</span><span id="regFeeOut">—</span></div>
+      </div>
+      <div class="total-banner">
+        <div><div class="label">Final price</div><div class="sub">incl. fee & shipping · rounded up</div></div>
+        <div class="value" id="regTotalOut">—</div>
       </div>
     `;
     const recalc = () => {
@@ -256,33 +293,44 @@ function renderCalculator(body) {
       const shipRate = parseFloat(document.getElementById('regShipRate').value) || 0;
       const fee = price * 0.10;
       const shipping = (weight / 1000) * shipRate;
-      document.getElementById('regFeeOut').textContent = fmtCur(fee, cur);
+      const final = roundUpFinal(price + fee + shipping, cur);
+      document.getElementById('regPriceOut').textContent = fmtCur(price, cur);
       document.getElementById('regShipOut').textContent = fmtCur(shipping, cur);
-      document.getElementById('regTotalOut').textContent = fmtCur(price + fee + shipping, cur);
+      document.getElementById('regFeeOut').textContent = fmtCur(fee, cur);
+      document.getElementById('regTotalOut').textContent = fmtCur(final, cur);
     };
     ['regPrice','regWeight','regShipRate'].forEach(id => document.getElementById(id).oninput = recalc);
     recalc();
   } else {
     calcBody.innerHTML = `
-      <p class="field-label">Book price, CIF (${cur})</p>
-      <input type="number" id="bkPrice" value="10" min="0" step="0.01" class="full-width" style="margin-bottom:10px;" />
-      <p class="field-label">Weight (g)</p>
-      <input type="number" id="bkWeight" value="400" min="0" step="10" class="full-width" style="margin-bottom:10px;" />
-      <p class="field-label">Shipping rate / kg (${cur})</p>
-      <input type="number" id="bkShipRate" value="${fx(5, cur).toFixed(2)}" min="0" step="0.01" class="full-width" style="margin-bottom:10px;" />
-      <p class="field-label">Format</p>
-      <select id="bkFormat" class="full-width" style="margin-bottom:10px;">
-        <option value="1">Paperback / Softcover (+£1)</option>
-        <option value="2">Hardback / Hardcover / Boardbook (+£2)</option>
-        <option value="3">Box set / Bundling (+£3)</option>
-      </select>
-      <div style="background:#f1efe8; border-radius:8px; padding:0.75rem 1rem; margin-top:10px;">
-        <div class="calc-result-row"><span>Jastip fee</span><span id="bkFeeOut">—</span></div>
-        <div class="calc-result-row"><span>Shipping</span><span id="bkShipOut">—</span></div>
-        <div class="calc-result-row"><span>Est. import tax (PPN + PPh)</span><span id="bkTaxOut">—</span></div>
-        <div class="calc-result-row total"><span>Total</span><span id="bkTotalOut">—</span></div>
+      <div class="card">
+        <div class="card-title"><span>📕</span><span>Book details</span></div>
+        <p class="field-label">Book price, CIF (${cur})</p>
+        <input type="number" id="bkPrice" value="10" min="0" step="0.01" class="full-width" style="margin-bottom:10px;" />
+        <p class="field-label">Weight (g)</p>
+        <input type="number" id="bkWeight" value="400" min="0" step="10" class="full-width" style="margin-bottom:10px;" />
+        <p class="field-label">Shipping rate / kg (${cur})</p>
+        <input type="number" id="bkShipRate" value="${fx(5, cur).toFixed(2)}" min="0" step="0.01" class="full-width" style="margin-bottom:10px;" />
+        <p class="field-label">Format</p>
+        <select id="bkFormat" class="full-width">
+          <option value="1">Paperback / Softcover (+£1)</option>
+          <option value="2">Hardback / Hardcover / Boardbook (+£2)</option>
+          <option value="3">Box set / Bundling (+£3)</option>
+        </select>
       </div>
-      <p style="font-size:12px; color:#888780; margin-top:8px;">Estimate only — PPN 11% + PPh 2.5% of CIF. Final tax determined at customs.</p>
+      <div class="card">
+        <div class="card-title"><span>📊</span><span>Price breakdown</span></div>
+        <div class="row"><span>Book price</span><span id="bkPriceOut">—</span></div>
+        <div class="row"><span>Shipping</span><span id="bkShipOut">—</span></div>
+        <div class="row"><span>Jastip fee</span><span id="bkFeeOut">—</span></div>
+        <div class="row"><span>CIF total</span><span id="bkCifOut">—</span></div>
+        <div class="row bold"><span>Est. import tax (PPN 11% + PPh 2.5%)</span><span id="bkTaxOut">—</span></div>
+      </div>
+      <div class="total-banner">
+        <div><div class="label">Final price</div><div class="sub">incl. estimated tax · rounded up</div></div>
+        <div class="value" id="bkTotalOut">—</div>
+      </div>
+      <p style="font-size:12px; color:#8a6d47; margin-top:10px;">* Estimate only. Actual customs may vary — verify at beacukai.go.id.</p>
     `;
     const recalc = () => {
       const price = parseFloat(document.getElementById('bkPrice').value) || 0;
@@ -291,13 +339,17 @@ function renderCalculator(body) {
       const formatFeeGBP = parseFloat(document.getElementById('bkFormat').value) || 0;
       const formatFee = fx(formatFeeGBP, cur);
       const shipping = (weight / 1000) * shipRate;
-      const cifGBP = price * RATES_TO_GBP[cur];
+      const cif = price + shipping + formatFee;
+      const cifGBP = cif * RATES_TO_GBP[cur];
       const taxGBP = cifGBP * 0.11 + cifGBP * 0.025;
       const tax = fx(taxGBP, cur);
-      document.getElementById('bkFeeOut').textContent = fmtCur(formatFee, cur);
+      const final = roundUpFinal(cif + tax, cur);
+      document.getElementById('bkPriceOut').textContent = fmtCur(price, cur);
       document.getElementById('bkShipOut').textContent = fmtCur(shipping, cur);
+      document.getElementById('bkFeeOut').textContent = fmtCur(formatFee, cur);
+      document.getElementById('bkCifOut').textContent = fmtCur(cif, cur);
       document.getElementById('bkTaxOut').textContent = fmtCur(tax, cur);
-      document.getElementById('bkTotalOut').textContent = fmtCur(price + formatFee + shipping + tax, cur);
+      document.getElementById('bkTotalOut').textContent = fmtCur(final, cur);
     };
     ['bkPrice','bkWeight','bkShipRate','bkFormat'].forEach(id => document.getElementById(id).addEventListener('input', recalc));
     recalc();

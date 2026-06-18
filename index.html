@@ -4,45 +4,37 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Jastipku</title>
-<link rel="manifest" href="data:application/json,{}">
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
   * { box-sizing: border-box; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; background: #f7f5f0; color: #2c2c2a; }
-  .app { max-width: 720px; margin: 0 auto; padding: 1rem; }
-  .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 10px; }
+  .app { max-width: 480px; margin: 0 auto; padding: 1rem; min-height: 100vh; }
+  .header { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 1.5rem 0 1.25rem; }
+  .header .logo { width: 40px; height: 40px; border-radius: 50%; background: #D85A30; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 18px; }
   .header h1 { font-size: 18px; font-weight: 600; margin: 0; }
   select, input, textarea, button { font-family: inherit; font-size: 14px; padding: 8px 10px; border-radius: 8px; border: 1px solid #d3d1c7; }
   button { background: #2c2c2a; color: #fff; border: none; cursor: pointer; }
   button:hover { opacity: 0.85; }
   button.secondary { background: #fff; color: #2c2c2a; border: 1px solid #d3d1c7; }
-  button.whatsapp { background: #0f6e56; }
-  .tabs { display: flex; gap: 4px; margin-bottom: 1.25rem; overflow-x: auto; border-bottom: 1px solid #d3d1c7; padding-bottom: 8px; }
-  .tab { padding: 8px 14px; border-radius: 8px; font-size: 14px; cursor: pointer; white-space: nowrap; }
+  .tabs { display: flex; gap: 4px; margin-bottom: 1.25rem; }
+  .tab { flex: 1; text-align: center; padding: 10px 14px; border-radius: 8px; font-size: 14px; cursor: pointer; }
   .tab.active { background: #fff; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
   .card { background: #fff; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1rem; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
   .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 0; border-bottom: 1px solid #eee; font-size: 14px; }
   .row:last-child { border-bottom: none; }
   .metric { background: #f1efe8; border-radius: 8px; padding: 1rem; }
   .metric p.label { font-size: 13px; color: #888780; margin: 0 0 4px; }
-  .metric p.value { font-size: 22px; font-weight: 600; margin: 0; }
-  .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 10px; margin-bottom: 1.25rem; }
+  .metric p.value { font-size: 20px; font-weight: 600; margin: 0; }
+  .metrics-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 1.25rem; }
   .badge { font-size: 12px; padding: 3px 10px; border-radius: 8px; font-weight: 600; }
   .badge.paid { background: #EAF3DE; color: #173404; }
   .badge.dp { background: #FAEEDA; color: #412402; }
   .badge.unpaid { background: #FCEBEB; color: #501313; }
   .loading { text-align: center; padding: 2rem; color: #888780; }
-  .welcome-screen { max-width: 360px; margin: 3rem auto; text-align: center; }
-  .welcome-screen .logo { width: 64px; height: 64px; border-radius: 50%; background: #D85A30; margin: 0 auto 1.25rem; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 28px; }
-  .welcome-screen h1 { font-size: 24px; margin: 0 0 8px; }
-  .welcome-screen p.sub { color: #888780; font-size: 14px; margin: 0 0 2rem; }
-  .welcome-actions { display: flex; flex-direction: column; gap: 10px; }
   .login-screen { max-width: 320px; margin: 3rem auto; text-align: center; }
   .login-screen .logo { width: 56px; height: 56px; border-radius: 50%; background: #D85A30; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 24px; }
   .full-width { width: 100%; }
   .error-text { color: #A32D2D; font-size: 13px; margin-top: 8px; }
-  .flash { background: #EAF3DE; color: #173404; padding: 8px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 1rem; }
   .calc-result-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; }
   .calc-result-row.total { font-weight: 600; border-top: 1px solid #d3d1c7; margin-top: 6px; padding-top: 10px; }
   .field-label { font-size: 13px; color: #888780; margin: 0 0 4px; }
@@ -52,7 +44,6 @@
 <div class="app" id="app"></div>
 
 <script>
-// === CONFIGURE THIS after deploying the Apps Script Web App ===
 const API_URL = 'https://script.google.com/macros/s/AKfycbx5vsd7rMtV5u6r82cgaNOwm5oKcSUKWQA0RHIomAX6KQV4hCvKrWfNg1aw7XdX6tGIAw/exec';
 
 const BUSINESS = {
@@ -72,21 +63,19 @@ function fmtCur(n, cur) {
   const v = Math.round(n * 100) / 100;
   return SYM[cur] + v.toLocaleString(undefined, { minimumFractionDigits: cur === 'IDR' ? 0 : 2, maximumFractionDigits: cur === 'IDR' ? 0 : 2 });
 }
-
-// Read query string once at load — supports ?view=customer to share a direct link
-const urlParams = new URLSearchParams(window.location.search);
+function fmtRp(n) {
+  return 'Rp' + Math.round(n).toLocaleString('id-ID');
+}
 
 const state = {
-  view: urlParams.get('view') === 'customer' ? 'customer' : 'welcome',
-  ownerTab: 'customers',
-  custStep: 'login',
+  step: 'login',
+  tab: 'order',
   custCode: '',
+  customer: null,
+  orders: [],
   custCalcType: 'regular',
   calcCurrency: 'GBP',
-  customers: [],
-  loading: true,
-  error: null,
-  ordersDebug: null
+  error: null
 };
 
 async function apiGet(action, params = {}) {
@@ -95,278 +84,110 @@ async function apiGet(action, params = {}) {
   return res.json();
 }
 
-async function apiPost(action, body = {}) {
-  const res = await fetch(API_URL, {
-    method: 'POST',
-    body: JSON.stringify({ action, ...body })
-  });
-  return res.json();
-}
-
-function fmtRp(n) {
-  return 'Rp' + Math.round(n).toLocaleString('id-ID');
-}
-
-function waLink(text, phone) {
-  const clean = (phone || '').replace(/[^0-9]/g, '');
-  return `https://wa.me/${clean}?text=${encodeURIComponent(text)}`;
-}
-
-function getShareLink() {
-  const base = window.location.origin + window.location.pathname;
-  return `${base}?view=customer`;
-}
-
-async function loadCustomers() {
-  state.loading = true;
-  render();
-  const data = await apiGet('getCustomers');
-  if (data.error) { state.error = data.error; }
-  else { state.customers = data; }
-  state.loading = false;
-  render();
-}
-
 function render() {
   const app = document.getElementById('app');
   app.innerHTML = '';
 
-  if (state.view === 'welcome') {
-    renderWelcome(app);
-    return;
-  }
-
   const header = document.createElement('div');
   header.className = 'header';
-  header.innerHTML = `
-    <h1>${BUSINESS.name}</h1>
-    <div style="display:flex; gap:8px;">
-      ${state.view === 'owner' ? `<button class="secondary" id="shareBtn">Copy customer link</button>` : ''}
-      <button class="secondary" id="viewSwitch">${state.view === 'owner' ? 'Switch to customer view' : 'Back to owner view'}</button>
-    </div>
-  `;
+  header.innerHTML = `<div class="logo">🐻</div><h1>Jastipku</h1>`;
   app.appendChild(header);
 
-  if (state.error) {
-    app.innerHTML += `<div class="card" style="color:#A32D2D;">Error: ${state.error}. Check that API_URL is set correctly and the Apps Script is deployed.</div>`;
+  if (state.step === 'login') {
+    renderLogin(app);
     return;
   }
 
-  if (state.loading) {
-    app.innerHTML += `<div class="loading">Loading...</div>`;
-    return;
-  }
-
-  if (state.view === 'owner') renderOwner(app);
-  else renderCustomer(app);
-
-  const shareBtn = document.getElementById('shareBtn');
-  if (shareBtn) {
-    shareBtn.onclick = () => {
-      navigator.clipboard.writeText(getShareLink()).then(() => {
-        shareBtn.textContent = 'Link copied!';
-        setTimeout(() => { shareBtn.textContent = 'Copy customer link'; }, 1800);
-      });
-    };
-  }
-
-  document.getElementById('viewSwitch').onclick = () => {
-    state.view = state.view === 'owner' ? 'customer' : 'owner';
-    state.custStep = 'login';
-    render();
-  };
-}
-
-function renderWelcome(app) {
-  app.innerHTML = `
-    <div class="welcome-screen">
-      <div class="logo">🐻</div>
-      <h1>Welcome to Jastipku</h1>
-      <p class="sub">Manage your jastip orders, or check on yours.</p>
-      <div class="welcome-actions">
-        <button class="full-width" id="ownerLoginBtn">Log in as business owner</button>
-        <button class="full-width secondary" id="customerLoginBtn">I'm a customer — check my order</button>
-      </div>
-    </div>
+  const nav = document.createElement('div');
+  nav.className = 'tabs';
+  nav.innerHTML = `
+    <div class="tab ${state.tab==='order'?'active':''}" data-tab="order">My order</div>
+    <div class="tab ${state.tab==='calc'?'active':''}" data-tab="calc">Calculator</div>
   `;
-  document.getElementById('ownerLoginBtn').onclick = () => { state.view = 'owner'; render(); };
-  document.getElementById('customerLoginBtn').onclick = () => { state.view = 'customer'; state.custStep = 'login'; render(); };
-}
-
-function renderOwner(app) {
-  const tabs = [['customers','Customers'],['orders','Orders'],['invoice','Invoice'],['profit','Profit']];
-  const tabBar = document.createElement('div');
-  tabBar.className = 'tabs';
-  tabBar.innerHTML = tabs.map(([id,label]) => `<div class="tab ${state.ownerTab===id?'active':''}" data-tab="${id}">${label}</div>`).join('');
-  app.appendChild(tabBar);
-  tabBar.querySelectorAll('.tab').forEach(el => el.onclick = () => { state.ownerTab = el.dataset.tab; render(); });
+  app.appendChild(nav);
+  nav.querySelectorAll('[data-tab]').forEach(el => el.onclick = () => { state.tab = el.dataset.tab; render(); });
 
   const body = document.createElement('div');
   app.appendChild(body);
 
-  if (state.ownerTab === 'customers') renderOwnerCustomers(body);
-  if (state.ownerTab === 'orders') renderOwnerOrders(body);
-  if (state.ownerTab === 'invoice') renderOwnerInvoice(body);
-  if (state.ownerTab === 'profit') renderOwnerProfit(body);
+  if (state.tab === 'order') renderMyOrder(body);
+  if (state.tab === 'calc') renderCalculator(body);
+
+  const backWrap = document.createElement('div');
+  backWrap.style.textAlign = 'center';
+  backWrap.style.marginTop = '1rem';
+  backWrap.innerHTML = `<button class="secondary" id="backBtn">Use a different code</button>`;
+  app.appendChild(backWrap);
+  document.getElementById('backBtn').onclick = () => {
+    state.step = 'login';
+    state.custCode = '';
+    state.customer = null;
+    state.orders = [];
+    render();
+  };
 }
 
-function renderOwnerCustomers(body) {
+function renderLogin(app) {
+  app.innerHTML += `
+    <div class="login-screen">
+      <p style="color:#888780; font-size:14px;">Enter your customer code to view your order</p>
+      <input id="codeInput" class="full-width" placeholder="e.g. SS6274" style="margin: 12px 0;" />
+      <button class="full-width" id="loginBtn">Continue</button>
+      <p id="loginErr" class="error-text"></p>
+    </div>
+  `;
+  document.getElementById('codeInput').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('loginBtn').click(); });
+  document.getElementById('loginBtn').onclick = async () => {
+    const code = document.getElementById('codeInput').value.trim().toUpperCase();
+    const errEl = document.getElementById('loginErr');
+    if (!code) { errEl.textContent = 'Please enter a code'; return; }
+    document.getElementById('loginBtn').textContent = 'Checking...';
+    const cust = await apiGet('getCustomerByCode', { code });
+    if (cust.error || !cust.code) {
+      errEl.textContent = 'Code not found — check and try again';
+      document.getElementById('loginBtn').textContent = 'Continue';
+      return;
+    }
+    state.customer = cust;
+    state.custCode = cust.code;
+    const orders = await apiGet('getOrdersForCustomer', { code: cust.code });
+    state.orders = Array.isArray(orders) ? orders : [];
+    state.step = 'app';
+    state.tab = 'order';
+    render();
+  };
+}
+
+function renderMyOrder(body) {
+  const cust = state.customer;
+  const orders = state.orders;
+  const totalOrder = orders.reduce((s,o)=>s+o.total,0);
+  const totalPaid = orders.reduce((s,o)=>s+o.downpayment,0);
+  const totalBalance = orders.reduce((s,o)=>s+o.balanceDue,0);
+
   body.innerHTML = `
-    <div class="card">
-      <p class="metric label" style="margin-bottom:8px;">Paste-to-parse new customer</p>
-      <textarea id="parseBox" rows="3" class="full-width" placeholder="Nama: Ani Wijaya&#10;Alamat: Jl. Kenanga No. 3, Medan&#10;No. Hp: +62 811 2233 4455"></textarea>
-      <div style="display:flex; gap:8px; margin-top:8px; align-items:center;">
-        <button id="parseBtn">Parse & add</button>
-        <input id="newCode" placeholder="Customer code (e.g. AB1234)" style="flex:1;" />
-        <span id="parseResult" style="font-size:13px; color:#888780;"></span>
-      </div>
+    <p style="text-align:center;"><strong>${cust.name}</strong> <span style="color:#888780;">· ${cust.code}</span></p>
+    <div class="metrics-grid">
+      <div class="metric"><p class="label">Total</p><p class="value">${fmtRp(totalOrder)}</p></div>
+      <div class="metric"><p class="label">Paid</p><p class="value">${fmtRp(totalPaid)}</p></div>
+      <div class="metric"><p class="label">Balance</p><p class="value">${fmtRp(totalBalance)}</p></div>
     </div>
     <div class="card">
-      ${state.customers.map(c => `
-        <div class="row">
-          <div>
-            <strong>${c.name}</strong> <span style="color:#888780;">· ${c.code}</span><br>
-            <span style="font-size:13px; color:#888780;">${c.address || ''} ${c.phone ? '· ' + c.phone : ''}</span>
+      ${orders.length === 0 ? '<p style="color:#888780;">No orders found for this code yet.</p>' : orders.map(o => `
+        <div class="row" style="align-items:flex-start;">
+          <div><strong>${o.poPeriod}</strong><br><span style="font-size:13px; color:#888780;">${o.itemCount} items</span></div>
+          <div style="text-align:right;">
+            <div>${fmtRp(o.total)}</div>
+            <span class="badge ${o.paymentStatus.toLowerCase()}">${o.paymentStatus}</span>
           </div>
         </div>
       `).join('')}
     </div>
+    ${orders.length > 0 ? `<button class="full-width" id="pdfBtn">Download invoice (PDF)</button>` : ''}
   `;
-  document.getElementById('parseBtn').onclick = async () => {
-    const raw = document.getElementById('parseBox').value;
-    const code = document.getElementById('newCode').value.trim();
-    const nameM = raw.match(/Nama:\s*(.+)/i);
-    const addrM = raw.match(/Alamat:\s*(.+)/i);
-    const phoneM = raw.match(/No\.?\s*Hp:\s*(.+)/i);
-    const result = document.getElementById('parseResult');
-    if (!code) { result.textContent = 'Enter a customer code'; return; }
-    if (!nameM) { result.textContent = 'Could not parse name'; return; }
-    result.textContent = 'Saving...';
-    const res = await apiPost('addCustomer', {
-      name: (nameM?.[1]||'').trim(),
-      address: (addrM?.[1]||'').trim(),
-      phone: (phoneM?.[1]||'').trim(),
-      code
-    });
-    if (res.success) {
-      result.textContent = `Added ${code}`;
-      await loadCustomers();
-    } else {
-      result.textContent = res.error || 'Failed to save';
-    }
-  };
-}
 
-async function renderOwnerOrders(body) {
-  body.innerHTML = `<div class="loading">Loading orders...</div>`;
-  let all;
-  try {
-    all = await apiGet('getAllOrders');
-  } catch (err) {
-    body.innerHTML = `<div class="card" style="color:#A32D2D;">Request failed: ${err.message}</div>`;
-    return;
-  }
-  if (all && all.error) {
-    body.innerHTML = `<div class="card" style="color:#A32D2D;">Backend error: ${all.error}</div>`;
-    return;
-  }
-  if (!Array.isArray(all) || all.length === 0) {
-    body.innerHTML = `<div class="card">No order data returned. This usually means the Orders sheet name or column headers don't match what the script expects — check the Apps Script logs (View &gt; Executions) for details.</div>`;
-    return;
-  }
-
-  const rows = all.flatMap(({customer, orders}) => (orders || []).map(o => `
-      <div class="row" style="align-items:flex-start;">
-        <div>
-          <strong>${customer.name}</strong> <span style="color:#888780;">· ${customer.code}</span><br>
-          <span style="font-size:13px; color:#888780;">${o.poPeriod} · ${o.itemCount} items</span>
-        </div>
-        <div style="text-align:right;">
-          <div>${fmtRp(o.total)}</div>
-          <span class="badge ${o.paymentStatus.toLowerCase()}">${o.paymentStatus}</span>
-        </div>
-      </div>
-  `));
-
-  if (rows.length === 0) {
-    body.innerHTML = `<div class="card">Customers loaded, but no order rows matched any customer code. Check that the Customer Code column in ORDER LIST matches CUST DATA exactly (no extra spaces).</div>`;
-    return;
-  }
-
-  body.innerHTML = `<div class="card">${rows.join('')}</div>`;
-}
-
-async function renderOwnerInvoice(body) {
-  body.innerHTML = `
-    <div class="card">
-      <p class="metric label">Customer</p>
-      <select id="invCustSel" class="full-width">
-        ${state.customers.map(c => `<option value="${c.code}">${c.name} (${c.code})</option>`).join('')}
-      </select>
-    </div>
-    <div id="invPreview"><div class="loading">Loading...</div></div>
-  `;
-  async function renderPreview() {
-    const custSel = document.getElementById('invCustSel');
-    if (!custSel) return; // tab changed before this ran — abort silently
-    const code = custSel.value;
-    const cust = state.customers.find(c => c.code === code);
-    const orders = await apiGet('getOrdersForCustomer', { code });
-    const preview = document.getElementById('invPreview');
-    if (!preview) return; // tab changed while the request was in flight
-    if (orders.error || !Array.isArray(orders)) {
-      preview.innerHTML = `<div class="card" style="color:#A32D2D;">Error loading orders: ${orders.error || 'unexpected response'}</div>`;
-      return;
-    }
-    const totalBalance = orders.reduce((s,o) => s + o.balanceDue, 0);
-
-    preview.innerHTML = `
-      <div class="card">
-        <div style="display:flex; justify-content:space-between; margin-bottom:1rem; flex-wrap:wrap; gap:1rem;">
-          <div><strong>${BUSINESS.name}</strong><br><span style="font-size:13px; color:#888780;">${BUSINESS.address}</span></div>
-          <div style="text-align:right;"><strong>${cust.name}</strong><br><span style="font-size:13px; color:#888780;">${cust.address || ''}<br>${cust.phone || ''}</span></div>
-        </div>
-        ${orders.map(o => `
-          <div class="row">
-            <span>${o.poPeriod} (${o.itemCount} items)</span>
-            <span>${fmtRp(o.total)}</span>
-          </div>
-        `).join('')}
-        <div class="row" style="font-weight:600; border-top:1px solid #d3d1c7; margin-top:8px;">
-          <span>Balance due</span><span>${fmtRp(totalBalance)}</span>
-        </div>
-      </div>
-      <div style="display:flex; gap:8px; flex-wrap:wrap;">
-        <button id="pdfBtn">Download PDF</button>
-        <button class="whatsapp" id="waBtn">Send via WhatsApp</button>
-        ${orders.length > 0 ? `
-        <select id="periodSel" style="flex:1;">
-          ${orders.map(o => `<option value="${o.poPeriod}">${o.poPeriod} — mark as paid</option>`).join('')}
-        </select>
-        <button class="secondary" id="markPaidBtn">Mark period paid</button>
-        ` : ''}
-      </div>
-    `;
-
-    document.getElementById('pdfBtn').onclick = () => generatePDF(cust, orders, totalBalance);
-    document.getElementById('waBtn').onclick = () => {
-      let txt = `*Invoice — ${BUSINESS.name}*\n\n${cust.name}\n${cust.address || ''}\n${cust.phone || ''}\n\n`;
-      orders.forEach(o => { txt += `${o.poPeriod}: ${fmtRp(o.total)} (${o.itemCount} items)\n`; });
-      txt += `\n*Balance due: ${fmtRp(totalBalance)}*\n\nBank: ${BUSINESS.bank}\nAccount: ${BUSINESS.account}\nName: ${BUSINESS.holder}`;
-      window.open(waLink(txt, cust.phone), '_blank');
-    };
-    const markPaidBtn = document.getElementById('markPaidBtn');
-    if (markPaidBtn) {
-      markPaidBtn.onclick = async () => {
-        const period = document.getElementById('periodSel').value;
-        markPaidBtn.textContent = 'Saving...';
-        await apiPost('markPeriodPaid', { code, poPeriod: period });
-        await renderPreview();
-      };
-    }
-  }
-  document.getElementById('invCustSel').onchange = renderPreview;
-  renderPreview();
+  const pdfBtn = document.getElementById('pdfBtn');
+  if (pdfBtn) pdfBtn.onclick = () => generatePDF(cust, orders, totalBalance);
 }
 
 function generatePDF(cust, orders, totalBalance) {
@@ -394,98 +215,6 @@ function generatePDF(cust, orders, totalBalance) {
   doc.save(`invoice-${cust.code}.pdf`);
 }
 
-async function renderOwnerProfit(body) {
-  body.innerHTML = `<div class="loading">Loading...</div>`;
-  const all = await apiGet('getAllOrders');
-  if (all.error || !Array.isArray(all)) {
-    body.innerHTML = `<div class="card" style="color:#A32D2D;">Error: ${all.error || 'unexpected response'}</div>`;
-    return;
-  }
-
-  let totalRevenue = 0, totalOrders = 0;
-  all.forEach(({orders}) => (orders || []).forEach(o => { totalRevenue += o.total; totalOrders += 1; }));
-
-  body.innerHTML = `
-    <div class="metrics-grid">
-      <div class="metric"><p class="label">Total revenue</p><p class="value">${fmtRp(totalRevenue)}</p></div>
-      <div class="metric"><p class="label">Total orders</p><p class="value">${totalOrders}</p></div>
-    </div>
-    <p style="font-size:13px; color:#888780;">Profit/jastip-fee tracking requires a fee column in your sheet — wire this up once that's defined.</p>
-  `;
-}
-
-function renderCustomer(app) {
-  if (state.custStep === 'login') {
-    app.innerHTML += `
-      <div class="login-screen">
-        <div class="logo">🐻</div>
-        <p><strong>${BUSINESS.name}</strong></p>
-        <p style="color:#888780; font-size:13px;">Enter your customer code</p>
-        <input id="codeInput" class="full-width" placeholder="e.g. SS6274" style="margin-bottom:10px;" />
-        <button class="full-width" id="loginBtn">Continue</button>
-        <p id="loginErr" class="error-text"></p>
-      </div>
-    `;
-    document.getElementById('loginBtn').onclick = () => {
-      const code = document.getElementById('codeInput').value.trim().toUpperCase();
-      const cust = state.customers.find(c => String(c.code).toUpperCase() === code);
-      if (cust) { state.custCode = code; state.custStep = 'order'; render(); }
-      else { document.getElementById('loginErr').textContent = 'Code not found'; }
-    };
-    return;
-  }
-
-  const cust = state.customers.find(c => c.code === state.custCode);
-  const nav = document.createElement('div');
-  nav.className = 'tabs';
-  nav.innerHTML = `
-    <div class="tab ${state.custStep==='order'?'active':''}" data-step="order">My order</div>
-    <div class="tab ${state.custStep==='calc'?'active':''}" data-step="calc">Calculator</div>
-    <div class="tab" id="backBtn" style="margin-left:auto;">Back</div>
-  `;
-  app.appendChild(nav);
-  nav.querySelectorAll('[data-step]').forEach(el => el.onclick = () => { state.custStep = el.dataset.step; render(); });
-  document.getElementById('backBtn').onclick = () => { state.custStep = 'login'; render(); };
-
-  const body = document.createElement('div');
-  app.appendChild(body);
-
-  if (state.custStep === 'order') renderMyOrder(body, cust);
-  if (state.custStep === 'calc') renderCalculator(body);
-}
-
-function renderMyOrder(body, cust) {
-  body.innerHTML = `<div class="loading">Loading...</div>`;
-  apiGet('getOrdersForCustomer', { code: cust.code }).then(orders => {
-    if (orders.error || !Array.isArray(orders)) {
-      body.innerHTML = `<div class="card" style="color:#A32D2D;">Error: ${orders.error || 'unexpected response'}</div>`;
-      return;
-    }
-    const totalOrder = orders.reduce((s,o)=>s+o.total,0);
-    const totalPaid = orders.reduce((s,o)=>s+o.downpayment,0);
-    const totalBalance = orders.reduce((s,o)=>s+o.balanceDue,0);
-    body.innerHTML = `
-      <p><strong>${cust.name}</strong> <span style="color:#888780;">· ${cust.code}</span></p>
-      <div class="metrics-grid">
-        <div class="metric"><p class="label">Total order</p><p class="value">${fmtRp(totalOrder)}</p></div>
-        <div class="metric"><p class="label">Paid</p><p class="value">${fmtRp(totalPaid)}</p></div>
-        <div class="metric"><p class="label">Balance</p><p class="value">${fmtRp(totalBalance)}</p></div>
-      </div>
-      <div class="card">
-        ${orders.length === 0 ? '<p style="color:#888780;">No orders found for this code yet.</p>' : orders.map(o => `
-          <div class="row" style="align-items:flex-start;">
-            <div><strong>${o.poPeriod}</strong><br><span style="font-size:13px; color:#888780;">${o.itemCount} items</span></div>
-            <div style="text-align:right;">
-              <div>${fmtRp(o.total)}</div>
-              <span class="badge ${o.paymentStatus.toLowerCase()}">${o.paymentStatus}</span>
-            </div>
-          </div>
-        `).join('')}
-      </div>
-    `;
-  });
-}
-
 function renderCalculator(body) {
   body.innerHTML = `
     <div class="card">
@@ -493,7 +222,7 @@ function renderCalculator(body) {
         <select id="calcCur">
           ${Object.keys(RATES_TO_GBP).map(c => `<option value="${c}" ${state.calcCurrency===c?'selected':''}>${c}</option>`).join('')}
         </select>
-        <div style="display:flex; gap:4px;">
+        <div style="display:flex; gap:4px; flex:1;">
           <div class="tab ${state.custCalcType==='regular'?'active':''}" data-ctype="regular">Regular item</div>
           <div class="tab ${state.custCalcType==='books'?'active':''}" data-ctype="books">Books</div>
         </div>
@@ -575,11 +304,7 @@ function renderCalculator(body) {
   }
 }
 
-if (state.view === 'welcome') {
-  render();
-} else {
-  loadCustomers();
-}
+render();
 </script>
 </body>
 </html>

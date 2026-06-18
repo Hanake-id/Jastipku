@@ -307,10 +307,13 @@ async function renderOwnerInvoice(body) {
     <div id="invPreview"><div class="loading">Loading...</div></div>
   `;
   async function renderPreview() {
-    const code = document.getElementById('invCustSel').value;
+    const custSel = document.getElementById('invCustSel');
+    if (!custSel) return; // tab changed before this ran — abort silently
+    const code = custSel.value;
     const cust = state.customers.find(c => c.code === code);
     const orders = await apiGet('getOrdersForCustomer', { code });
     const preview = document.getElementById('invPreview');
+    if (!preview) return; // tab changed while the request was in flight
     if (orders.error || !Array.isArray(orders)) {
       preview.innerHTML = `<div class="card" style="color:#A32D2D;">Error loading orders: ${orders.error || 'unexpected response'}</div>`;
       return;

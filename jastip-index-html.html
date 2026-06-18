@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Happy & Bear Jastip</title>
+<link rel="manifest" href="data:application/json,{}">
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; background: #f7f5f0; color: #2c2c2a; }
+  .app { max-width: 720px; margin: 0 auto; padding: 1rem; }
+  .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 10px; }
+  .header h1 { font-size: 18px; font-weight: 600; margin: 0; }
+  select, input, textarea, button { font-family: inherit; font-size: 14px; padding: 8px 10px; border-radius: 8px; border: 1px solid #d3d1c7; }
+  button { background: #2c2c2a; color: #fff; border: none; cursor: pointer; }
+  button:hover { opacity: 0.85; }
+  button.secondary { background: #fff; color: #2c2c2a; border: 1px solid #d3d1c7; }
+  button.whatsapp { background: #0f6e56; }
+  .tabs { display: flex; gap: 4px; margin-bottom: 1.25rem; overflow-x: auto; border-bottom: 1px solid #d3d1c7; padding-bottom: 8px; }
+  .tab { padding: 8px 14px; border-radius: 8px; font-size: 14px; cursor: pointer; white-space: nowrap; }
+  .tab.active { background: #fff; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
+  .card { background: #fff; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1rem; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 0; border-bottom: 1px solid #eee; font-size: 14px; }
+  .row:last-child { border-bottom: none; }
+  .metric { background: #f1efe8; border-radius: 8px; padding: 1rem; }
+  .metric p.label { font-size: 13px; color: #888780; margin: 0 0 4px; }
+  .metric p.value { font-size: 22px; font-weight: 600; margin: 0; }
+  .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 10px; margin-bottom: 1.25rem; }
+  .badge { font-size: 12px; padding: 3px 10px; border-radius: 8px; font-weight: 600; }
+  .badge.paid { background: #EAF3DE; color: #173404; }
+  .badge.dp { background: #FAEEDA; color: #412402; }
+  .badge.unpaid { background: #FCEBEB; color: #501313; }
+  .loading { text-align: center; padding: 2rem; color: #888780; }
+  .login-screen { max-width: 320px; margin: 3rem auto; text-align: center; }
+  .login-screen .logo { width: 56px; height: 56px; border-radius: 50%; background: #D85A30; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 24px; }
+  .full-width { width: 100%; }
+  .error-text { color: #A32D2D; font-size: 13px; margin-top: 8px; }
+  .flash { background: #EAF3DE; color: #173404; padding: 8px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 1rem; }
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+
+<script>
+// === CONFIGURE THIS after deploying the Apps Script Web App ===
+const API_URL = 'PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE';
+
+const BUSINESS = {
+  name: 'Happy & Bear Books',
+  address: '14 Market St, Kettering, UK',
+  phone: '+44 7700 900123',
+  bank: 'Lloyds Bank',
+  account: '20-31-45 / 12345678',
+  holder: 'Happy & Bear Books Ltd'
+};
+
+const state = {
+  view: 'owner',
+  ownerTab: 'customers',
+  custStep: 'login',
+  custCode: '',
+  customers: [],
+  loading: true,
+  error: null
+};
+
+async function apiGet(action, params = {}) {
+  const qs = new URLSearchParams({ action, ...params }).toString();
+  const res = await fetch(`${API_URL}?${qs}`);
+  return res.json();
+}
+
+async function apiPost(action, body = {}) {
+  const res = await fetch(API_URL, {
+    method: 'POST',
+    body: JSON.stringify({ action, ...body })
+  });
+  return res.json();
+}
+
+function fmtRp(n) {
+  return 'Rp' + Math.round(n).toLocaleString('id-ID');
+}
+
+function waLink(text, phone) {
+  const clean = (phone || '').replace(/[^0-9]/g, '');
+  return `https://wa.me/${clean}?text=${encodeURIComponent(text)}`;
+}
+
+async function loadCustomers() {
+  state.loading = true;
+  render();
+  const data = await apiGet('getCustomers');
+  if (data.error) { state.error = data.error; }
+  else { state.customers = data; }
+  state.loading = false;
+  render();
+}
+
+function render() {
+  const app = document.getElementById('app');
+  app.innerHTML = '';
+
+  const header = document.createElement('div');
+  header.className = 'header';
+  header.innerHTML = `
+    <h1>${BUSINESS.name}</h1>
+    <button class="secondary" id="viewSwitch">${state.view === 'owner' ? 'Switch to customer view' : 'Switch to owner view'}</button>
+  `;
+  app.appendChild(header);
+
+  if (state.error) {
+    app.innerHTML += `<div class="card" style="color:#A32D2D;">Error: ${state.error}. Check that API_URL is set correctly and the Apps Script is deployed.</div>`;
+    return;
+  }
+
+  if (state.loading) {
+    app.innerHTML += `<div class="loading">Loading...</div>`;
+    return;
+  }
+
+  if (state.view === 'owner') renderOwner(app);
+  else renderCustomer(app);
+
+  document.getElementById('viewSwitch').onclick = () => {
+    state.view = state.view === 'owner' ? 'customer' : 'owner';
+    state.custStep = 'login';
+    render();
+  };
+}
+
+function renderOwner(app) {
+  const tabs = [['customers','Customers'],['orders','Orders'],['invoice','Invoice'],['profit','Profit']];
+  const tabBar = document.createElement('div');
+  tabBar.className = 'tabs';
+  tabBar.innerHTML = tabs.map(([id,label]) => `<div class="tab ${state.ownerTab===id?'active':''}" data-tab="${id}">${label}</div>`).join('');
+  app.appendChild(tabBar);
+  tabBar.querySelectorAll('.tab').forEach(el => el.onclick = () => { state.ownerTab = el.dataset.tab; render(); });
+
+  const body = document.createElement('div');
+  app.appendChild(body);
+
+  if (state.ownerTab === 'customers') renderOwnerCustomers(body);
+  if (state.ownerTab === 'orders') renderOwnerOrders(body);
+  if (state.ownerTab === 'invoice') renderOwnerInvoice(body);
+  if (state.ownerTab === 'profit') renderOwnerProfit(body);
+}
+
+function renderOwnerCustomers(body) {
+  body.innerHTML = `
+    <div class="card">
+      <p class="metric label" style="margin-bottom:8px;">Paste-to-parse new customer</p>
+      <textarea id="parseBox" rows="3" class="full-width" placeholder="Nama: Ani Wijaya&#10;Alamat: Jl. Kenanga No. 3, Medan&#10;No. Hp: +62 811 2233 4455"></textarea>
+      <div style="display:flex; gap:8px; margin-top:8px; align-items:center;">
+        <button id="parseBtn">Parse & add</button>
+        <input id="newCode" placeholder="Customer code (e.g. AB1234)" style="flex:1;" />
+        <span id="parseResult" style="font-size:13px; color:#888780;"></span>
+      </div>
+    </div>
+    <div class="card">
+      ${state.customers.map(c => `
+        <div class="row">
+          <div>
+            <strong>${c.name}</strong> <span style="color:#888780;">· ${c.code}</span><br>
+            <span style="font-size:13px; color:#888780;">${c.address || ''} ${c.phone ? '· ' + c.phone : ''}</span>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+  document.getElementById('parseBtn').onclick = async () => {
+    const raw = document.getElementById('parseBox').value;
+    const code = document.getElementById('newCode').value.trim();
+    const nameM = raw.match(/Nama:\s*(.+)/i);
+    const addrM = raw.match(/Alamat:\s*(.+)/i);
+    const phoneM = raw.match(/No\.?\s*Hp:\s*(.+)/i);
+    const result = document.getElementById('parseResult');
+    if (!code) { result.textContent = 'Enter a customer code'; return; }
+    if (!nameM) { result.textContent = 'Could not parse name'; return; }
+    result.textContent = 'Saving...';
+    const res = await apiPost('addCustomer', {
+      name: (nameM?.[1]||'').trim(),
+      address: (addrM?.[1]||'').trim(),
+      phone: (phoneM?.[1]||'').trim(),
+      code
+    });
+    if (res.success) {
+      result.textContent = `Added ${code}`;
+      await loadCustomers();
+    } else {
+      result.textContent = res.error || 'Failed to save';
+    }
+  };
+}
+
+async function renderOwnerOrders(body) {
+  body.innerHTML = `<div class="loading">Loading orders...</div>`;
+  const all = await apiGet('getAllOrders');
+  if (all.error) { body.innerHTML = `<div class="card">Error: ${all.error}</div>`; return; }
+
+  body.innerHTML = `<div class="card">
+    ${all.flatMap(({customer, orders}) => orders.map(o => `
+      <div class="row" style="align-items:flex-start;">
+        <div>
+          <strong>${customer.name}</strong> <span style="color:#888780;">· ${customer.code}</span><br>
+          <span style="font-size:13px; color:#888780;">${o.poPeriod} · ${o.itemCount} items</span>
+        </div>
+        <div style="text-align:right;">
+          <div>${fmtRp(o.total)}</div>
+          <span class="badge ${o.paymentStatus.toLowerCase()}">${o.paymentStatus}</span>
+        </div>
+      </div>
+    `)).join('')}
+  </div>`;
+}
+
+async function renderOwnerInvoice(body) {
+  body.innerHTML = `
+    <div class="card">
+      <p class="metric label">Customer</p>
+      <select id="invCustSel" class="full-width">
+        ${state.customers.map(c => `<option value="${c.code}">${c.name} (${c.code})</option>`).join('')}
+      </select>
+    </div>
+    <div id="invPreview"><div class="loading">Loading...</div></div>
+  `;
+  async function renderPreview() {
+    const code = document.getElementById('invCustSel').value;
+    const cust = state.customers.find(c => c.code === code);
+    const orders = await apiGet('getOrdersForCustomer', { code });
+    const preview = document.getElementById('invPreview');
+    const totalBalance = orders.reduce((s,o) => s + o.balanceDue, 0);
+
+    preview.innerHTML = `
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; margin-bottom:1rem; flex-wrap:wrap; gap:1rem;">
+          <div><strong>${BUSINESS.name}</strong><br><span style="font-size:13px; color:#888780;">${BUSINESS.address}</span></div>
+          <div style="text-align:right;"><strong>${cust.name}</strong><br><span style="font-size:13px; color:#888780;">${cust.address || ''}<br>${cust.phone || ''}</span></div>
+        </div>
+        ${orders.map(o => `
+          <div class="row">
+            <span>${o.poPeriod} (${o.itemCount} items)</span>
+            <span>${fmtRp(o.total)}</span>
+          </div>
+        `).join('')}
+        <div class="row" style="font-weight:600; border-top:1px solid #d3d1c7; margin-top:8px;">
+          <span>Balance due</span><span>${fmtRp(totalBalance)}</span>
+        </div>
+      </div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button id="pdfBtn">Download PDF</button>
+        <button class="whatsapp" id="waBtn">Send via WhatsApp</button>
+        <select id="periodSel" style="flex:1;">
+          ${orders.map(o => `<option value="${o.poPeriod}">${o.poPeriod} — mark as paid</option>`).join('')}
+        </select>
+        <button class="secondary" id="markPaidBtn">Mark period paid</button>
+      </div>
+    `;
+
+    document.getElementById('pdfBtn').onclick = () => generatePDF(cust, orders, totalBalance);
+    document.getElementById('waBtn').onclick = () => {
+      let txt = `*Invoice — ${BUSINESS.name}*\n\n${cust.name}\n${cust.address || ''}\n${cust.phone || ''}\n\n`;
+      orders.forEach(o => { txt += `${o.poPeriod}: ${fmtRp(o.total)} (${o.itemCount} items)\n`; });
+      txt += `\n*Balance due: ${fmtRp(totalBalance)}*\n\nBank: ${BUSINESS.bank}\nAccount: ${BUSINESS.account}\nName: ${BUSINESS.holder}`;
+      window.open(waLink(txt, cust.phone), '_blank');
+    };
+    document.getElementById('markPaidBtn').onclick = async () => {
+      const period = document.getElementById('periodSel').value;
+      document.getElementById('markPaidBtn').textContent = 'Saving...';
+      await apiPost('markPeriodPaid', { code, poPeriod: period });
+      await renderPreview();
+    };
+  }
+  document.getElementById('invCustSel').onchange = renderPreview;
+  renderPreview();
+}
+
+function generatePDF(cust, orders, totalBalance) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.setFontSize(16); doc.text(BUSINESS.name, 14, 18);
+  doc.setFontSize(10); doc.text(BUSINESS.address, 14, 25);
+  doc.setFontSize(12); doc.text(cust.name, 140, 18);
+  doc.setFontSize(10); doc.text(cust.address || '', 140, 25); doc.text(cust.phone || '', 140, 31);
+  let y = 45;
+  doc.setFontSize(11);
+  orders.forEach(o => {
+    doc.text(`${o.poPeriod} — ${o.itemCount} items`, 14, y);
+    doc.text(`Rp${Math.round(o.total).toLocaleString('id-ID')}`, 160, y);
+    y += 8;
+  });
+  y += 5;
+  doc.setFontSize(13);
+  doc.text(`Balance due: Rp${Math.round(totalBalance).toLocaleString('id-ID')}`, 14, y);
+  y += 12;
+  doc.setFontSize(10);
+  doc.text(`Bank: ${BUSINESS.bank}`, 14, y);
+  doc.text(`Account: ${BUSINESS.account}`, 14, y + 6);
+  doc.text(`Name: ${BUSINESS.holder}`, 14, y + 12);
+  doc.save(`invoice-${cust.code}.pdf`);
+}
+
+async function renderOwnerProfit(body) {
+  body.innerHTML = `<div class="loading">Loading...</div>`;
+  const all = await apiGet('getAllOrders');
+  if (all.error) { body.innerHTML = `<div class="card">Error: ${all.error}</div>`; return; }
+
+  let totalRevenue = 0, totalOrders = 0;
+  all.forEach(({orders}) => orders.forEach(o => { totalRevenue += o.total; totalOrders += 1; }));
+
+  body.innerHTML = `
+    <div class="metrics-grid">
+      <div class="metric"><p class="label">Total revenue</p><p class="value">${fmtRp(totalRevenue)}</p></div>
+      <div class="metric"><p class="label">Total orders</p><p class="value">${totalOrders}</p></div>
+    </div>
+    <p style="font-size:13px; color:#888780;">Profit/jastip-fee tracking requires a fee column in your sheet — wire this up once that's defined.</p>
+  `;
+}
+
+function renderCustomer(app) {
+  if (state.custStep === 'login') {
+    app.innerHTML += `
+      <div class="login-screen">
+        <div class="logo">🐻</div>
+        <p><strong>${BUSINESS.name}</strong></p>
+        <p style="color:#888780; font-size:13px;">Enter your customer code</p>
+        <input id="codeInput" class="full-width" placeholder="e.g. SS6274" style="margin-bottom:10px;" />
+        <button class="full-width" id="loginBtn">Continue</button>
+        <p id="loginErr" class="error-text"></p>
+      </div>
+    `;
+    document.getElementById('loginBtn').onclick = () => {
+      const code = document.getElementById('codeInput').value.trim().toUpperCase();
+      const cust = state.customers.find(c => String(c.code).toUpperCase() === code);
+      if (cust) { state.custCode = code; state.custStep = 'order'; render(); }
+      else { document.getElementById('loginErr').textContent = 'Code not found'; }
+    };
+    return;
+  }
+
+  const cust = state.customers.find(c => c.code === state.custCode);
+  const nav = document.createElement('div');
+  nav.className = 'tabs';
+  nav.innerHTML = `<div class="tab active">My order</div><div class="tab" id="backBtn" style="margin-left:auto;">Back</div>`;
+  app.appendChild(nav);
+  document.getElementById('backBtn').onclick = () => { state.custStep = 'login'; render(); };
+
+  const body = document.createElement('div');
+  body.innerHTML = `<div class="loading">Loading...</div>`;
+  app.appendChild(body);
+
+  apiGet('getOrdersForCustomer', { code: cust.code }).then(orders => {
+    if (orders.error) { body.innerHTML = `<div class="card">Error: ${orders.error}</div>`; return; }
+    const totalOrder = orders.reduce((s,o)=>s+o.total,0);
+    const totalPaid = orders.reduce((s,o)=>s+o.downpayment,0);
+    const totalBalance = orders.reduce((s,o)=>s+o.balanceDue,0);
+    body.innerHTML = `
+      <p><strong>${cust.name}</strong> <span style="color:#888780;">· ${cust.code}</span></p>
+      <div class="metrics-grid">
+        <div class="metric"><p class="label">Total order</p><p class="value">${fmtRp(totalOrder)}</p></div>
+        <div class="metric"><p class="label">Paid</p><p class="value">${fmtRp(totalPaid)}</p></div>
+        <div class="metric"><p class="label">Balance</p><p class="value">${fmtRp(totalBalance)}</p></div>
+      </div>
+      <div class="card">
+        ${orders.map(o => `
+          <div class="row" style="align-items:flex-start;">
+            <div><strong>${o.poPeriod}</strong><br><span style="font-size:13px; color:#888780;">${o.itemCount} items</span></div>
+            <div style="text-align:right;">
+              <div>${fmtRp(o.total)}</div>
+              <span class="badge ${o.paymentStatus.toLowerCase()}">${o.paymentStatus}</span>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  });
+}
+
+loadCustomers();
+</script>
+</body>
+</html>
